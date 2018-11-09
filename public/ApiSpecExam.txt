@@ -1,0 +1,68 @@
+------- Entity -------
+drinkItem: {
+  name: String,
+  price: Number,
+  pic: String(url)
+}
+
+menu: [type is drinkItem]
+
+drink: {
+  name: String,
+  qty: Number,
+  size: String('S', 'M', 'L'),
+  price: Number,
+  comment: String
+}
+
+order: {
+  orderId: string (need only request to update),
+  list: [type is drink],
+  totalPrice: Number,
+  status: string (only for query)
+}
+
+------- Spec -------
+http Header: with token (signIn token)
+response 400 -> Usually validation error
+
+/** 取得可點的飲料菜單 **/
+path: /api/order/menu
+  method: get
+  response: a type of menu
+
+/** 查詢單一訂單 **/
+path: /api/order/:orderId
+  method: get
+  security: signedIn
+  response: a type of order; no data will be empty body {}
+  error: 401(not signedIn), 400(bad request),
+
+/** 取得該人所有訂過的訂單 **/
+path: /api/order/
+  method: get
+  security: signedIn
+  response: a type of list of order; no data will be empty list {list: []}
+  error: 401(not signedIn), 400(bad request),
+
+/** 下訂單 **/
+path: /api/order/create
+  method: put
+  security: signedIn
+  response: {orderId: string}
+
+/** 取消訂單 **/
+path: /api/order/delete
+  method: delete
+  security: signedIn(admin)
+  request: {orderId: string}
+  response: {orderId: string, message: errorMsg} --> 成功回傳 orderId; fail will have errorMsg(ex: Order Status is completed)
+  error: 401(not signedIn, not admin, creator), 400(bad request),
+
+/** 修改訂單 **/
+path: /api/order/update
+  method: post
+  security: signedIn (Must be the person who created this order)
+  request: {...a type of order, orderId: string}
+  response: {orderId: string, message: errorMsg} --> 成功回傳 orderId; fail will have errorMsg(ex: Order Status is not new)
+  error: 401(not signedIn, not creator), 400(bad request),
